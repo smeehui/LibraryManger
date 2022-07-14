@@ -1,0 +1,7 @@
+BOOKLENDING
+id| bookItemId| userID| LendingStatus status| Instant createdAt| Instant dueAt| Instant returnAt
+USER
+id | username | password| fullName|mobile| email| address| Role
+BOOKITEM
+bookItemID,publisher,numberOfPages,borrowedAt, dueAt,price,format,status,
+dateOfPurchase,publicationAt,updatedAt,bookId
