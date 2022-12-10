@@ -2,10 +2,12 @@ package con.library.components.booklending.views;
 
 import con.library.components.booklending.services.BookLendingService;
 import con.library.components.booklending.services.IBookLendingService;
+import con.library.components.books.models.Book;
 import con.library.components.books.models.BookItem;
 import con.library.components.booklending.model.BookLending;
 import con.library.components.books.models.BookStatus;
 import con.library.components.booklending.model.LendingStatus;
+import con.library.components.books.services.BookService;
 import con.library.components.user.models.User;
 import con.library.components.user.services.IUserService;
 import con.library.components.user.services.UserService;
@@ -17,6 +19,11 @@ import con.library.utils.InputRetry;
 import con.library.utils.InstantUtils;
 import con.library.views.InputOption;
 import con.library.views.View;
+import de.vandermeer.asciitable.AT_Row;
+import de.vandermeer.asciitable.AsciiTable;
+import de.vandermeer.asciitable.CWC_LongestLine;
+import de.vandermeer.asciithemes.a8.A8_Grids;
+import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment;
 
 import java.time.Instant;
 
@@ -25,12 +32,14 @@ public class BookLendingView extends View {
     private IUserService userService;
     private IBookItemService bookItemService;
     private InputRetry tryInput = InputRetry.getInstance();
+    private BookService bookService;
 
 
     public BookLendingView() {
         bookLendingService = BookLendingService.getInstance();
         userService = UserService.getInstance();
         bookItemService = BookItemService.getInstance();
+        bookService = BookService.getInstance();
     }
 
     public void update() {
@@ -169,10 +178,16 @@ public class BookLendingView extends View {
     }
 
     public void checkoutBook() {
-        long bookItemId = inputBookItemId(InputOption.CHECKOUT);
-        BookItem bookItem = bookItemService.findById(bookItemId);
-        System.out.println(bookItem);
-        if (bookItem.getStatus() != BookStatus.AVAILABLE){
+        long bookItemId;
+        BookItem bookItem;
+        do {
+            bookItemId = inputBookItemId(InputOption.CHECKOUT);
+            if (tryInput.isReturn(String.valueOf(bookItemId))) return;
+            bookItem = bookItemService.findById(bookItemId);
+            if (bookItem == null) System.out.println("Không tìm thấy Book Item");
+        } while (bookItem == null);
+        viewBookItemDetails(bookItem);
+        if (bookItem.getStatus() != BookStatus.AVAILABLE) {
             System.out.println("Sách này tạm thời không có sẵn");
         }
         if (bookItem.isReferenceOnly()) {
@@ -189,6 +204,35 @@ public class BookLendingView extends View {
 
         bookLendingService.lendBook(userId, bookItem.getBookItemID());
         System.out.println("Bạn đã mượn sách thành công");
+    }
+
+    private void viewBookItemDetails(BookItem bookItem) {
+        tHeadings = new String[]{"ID","Tiêu đề", "Nhà XB", "Số trang", "Ngày mượn sách", "Hạn trả sách", "Giá sách",
+                "Định dạng", "Trạng thái sách", "Ngày mua", "Năm XB", "Ngày cập nhật"};
+        AsciiTable at = new AsciiTable();
+        at.getRenderer().setCWC(new CWC_LongestLine());
+        AT_Row tHead = at.addRow(tHeadings);
+        tHead.getCells().get(0).getContext().setTextAlignment(TextAlignment.RIGHT);
+        tHead.getCells().get(2).getContext().setTextAlignment(TextAlignment.RIGHT);
+        tHead.setPaddingLeft(1);
+        tHead.setPaddingRight(1);
+        at.setTextAlignment(TextAlignment.CENTER);
+        at.addRule();
+        String [] details = rearrangeTitles(bookItem);
+        AT_Row row = at.addRow(details);
+        row.setPaddingLeft(1);
+        row.setPaddingRight(1);
+        at.addRule();
+        at.getContext().setGrid(A8_Grids.lineDoubleBlocks());
+        System.out.println(at.render(100));
+    }
+
+    private String[] rearrangeTitles(BookItem bookItem) {
+        String [] splitted = bookItem.toString().split(",");
+        Book book = bookService.findById(Long.valueOf(splitted[11]));
+        return new String[] {splitted[0],book.getTitle(),splitted[1],splitted[2],splitted[3],
+                                splitted[4],splitted[5],splitted[6],splitted[7],
+                                splitted[8],splitted[9],splitted[10]};
     }
 
     public void returnBook() {
@@ -252,8 +296,8 @@ public class BookLendingView extends View {
                 bookLending.getDueAt() == null ? "" : InstantUtils.instantToString(bookLending.getDueAt()),
                 InstantUtils.instantToString(Instant.now()),
 //                bookLending.getReturnAt() == null ? "" : InstantUtils.instantToString(bookLending.getReturnAt()),
-                millis > 0 ? millis/86400000 : 0,
-                millis > 0 ? millis/86400000*Constants.FINE_AMOUNT : 0
+                millis > 0 ? millis / 86400000 : 0,
+                millis > 0 ? millis / 86400000 * Constants.FINE_AMOUNT : 0
 
         );
         System.out.println("----------------------------------------------------------------------------------------------------------------------------------------------\n");
