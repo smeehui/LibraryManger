@@ -6,6 +6,7 @@ import con.library.components.books.services.IBookService;
 import con.library.components.books.models.Book;
 import con.library.components.books.models.BookFormat;
 import con.library.components.books.models.BookItem;
+import con.library.utils.InstantUtils;
 import con.library.utils.ValidateUtils;
 import con.library.views.*;
 import de.vandermeer.asciitable.AT_Row;
@@ -352,7 +353,8 @@ public class BookView extends View implements ListView<Book>{
             at.addRule();
             int count = 0;
             for (Book book : books) {
-                AT_Row row = at.addRow(++count, book.getId(), book.getIsbn(), book.getTitle(), book.getAuthor(), book.getSubject(), book.getLanguage(), book.getCreatedAt(), book.getUpdatedAt());
+                AT_Row row = at.addRow(++count, book.getId(), book.getIsbn(), book.getTitle(), book.getAuthor(), book.getSubject(), book.getLanguage(),
+                        InstantUtils.instantToString(book.getCreatedAt()), InstantUtils.instantToString(book.getUpdatedAt()));
                 row.getCells().get(0).getContext().setTextAlignment(TextAlignment.CENTER);
                 row.getCells().get(1).getContext().setTextAlignment(TextAlignment.RIGHT);
                 row.getCells().get(3).getContext().setTextAlignment(TextAlignment.LEFT);

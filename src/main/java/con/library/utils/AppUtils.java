@@ -3,7 +3,6 @@ package con.library.utils;
 import con.library.views.InputOption;
 import con.library.views.MenuView;
 
-import java.text.DecimalFormat;
 import java.util.Scanner;
 
 public class AppUtils {
@@ -62,25 +61,6 @@ public class AppUtils {
                 System.out.println("Nhập sai.Vui lòng nhập lại.");
             }
         } while (true);
-    }
-
-    public static double retryParseDouble() {
-        double result;
-        do {
-            System.out.print(" ⭆ ");
-            try {
-                result = Double.parseDouble(SCANNER.nextLine());
-                return result;
-            } catch (Exception ex) {
-                System.out.println("Nhập sai! vui lòng nhập lại");
-            }
-        } while (true);
-    }
-
-    public static String doubleToVND(double value) {
-        String patternVND = ",###₫";
-        DecimalFormat decimalFormat = new DecimalFormat(patternVND);
-        return decimalFormat.format(value);
     }
 
     public static boolean isRetry(InputOption inputOption) {

@@ -5,7 +5,7 @@ import con.library.components.books.services.IBookItemService;
 import con.library.components.books.models.BookFormat;
 import con.library.components.books.models.BookItem;
 import con.library.components.books.models.BookStatus;
-import con.library.utils.AppUtils;
+import con.library.utils.CurrencyUtils;
 import con.library.utils.InstantUtils;
 import con.library.views.InputOption;
 import con.library.views.ListView;
@@ -14,7 +14,6 @@ import con.library.views.View;
 import de.vandermeer.asciitable.AT_Row;
 import de.vandermeer.asciitable.AsciiTable;
 import de.vandermeer.asciitable.CWC_LongestLine;
-import de.vandermeer.asciitable.CWC_LongestWordMax;
 import de.vandermeer.asciithemes.a8.A8_Grids;
 import de.vandermeer.skb.interfaces.transformers.textformat.TextAlignment;
 
@@ -26,9 +25,8 @@ public class BookItemView extends View implements ListView<BookItem> {
 
     public BookItemView() {
         bookItemService = BookItemService.getInstance();
-        caption = "DANH SÁCH BOOKITEM";
-        tHeadings = new String[]{"#", "Id", "Tên sách", "Nhà XB", "Năm XB", "Gía sách", "Định dạng ", "Trạng thái ", "Ngày nhập vào TV", "Ngày mượn sách", "Hạn trả sách"};
-        //3, 8, 25,15,5, 7, 6, 6, 15, 15, 15
+        caption = "DANH SÁCH SÁCH MƯỢN";
+        tHeadings = new String[]{"#", "Id", "Tên sách", "Nhà XB", "Năm XB", "Gía sách", "Định dạng ", "Trạng thái ", "Ngày nhập vào TV", "Ngày mượn sách"};
     }
 
     public void update() {
@@ -44,44 +42,42 @@ public class BookItemView extends View implements ListView<BookItem> {
             BookItem newBookItem = new BookItem();
             newBookItem.setBookItemID(id);
             switch (option) {
-                case 1:
+                case 1 -> {
                     String publisher = inputPublisher(InputOption.UPDATE);
                     if (tryInput.isReturn(publisher)) break;
                     newBookItem.setPublisher(publisher);
                     bookItemService.update(newBookItem);
                     System.out.println("Nhà xuất bản đã cập nhập thành công");
-                    break;
-                case 2:
+                }
+                case 2 -> {
                     Integer publicationAt = inputPublicationAt(InputOption.UPDATE);
-                    if (tryInput.isReturn(String.valueOf(publicationAt)));
+                    if (tryInput.isReturn(String.valueOf(publicationAt))) break ;
                     newBookItem.setPublicationAt(publicationAt);
                     bookItemService.update(newBookItem);
                     System.out.println("Năm xuất bản đã cập nhập thành công");
-                    break;
-                case 3:
+                }
+                case 3 -> {
                     double price = inputPrice(InputOption.UPDATE);
                     if (tryInput.isReturn(String.valueOf(price))) return;
                     newBookItem.setPrice(price);
                     bookItemService.update(newBookItem);
                     System.out.println("Gía sách đã cập nhật thành công");
-                    break;
-                case 4:
+                }
+                case 4 -> {
                     BookFormat bookFormat = inputBookFormat(InputOption.UPDATE);
                     if (tryInput.isReturn(String.valueOf(bookFormat))) return;
                     newBookItem.setFormat(BookFormat.parserBookFormat(bookFormat.getValue()));
                     bookItemService.update(newBookItem);
                     System.out.println("Định dạng sách đã cập nhật thành công");
-                    break;
-                case 5:
+                }
+                case 5 -> {
                     BookStatus status = inputBookStatus(InputOption.UPDATE);
                     if (tryInput.isReturn(String.valueOf(status))) return;
                     newBookItem.setStatus(status);
                     bookItemService.update(newBookItem);
                     System.out.println("Trạng thái của sách đã cập nhập thành công");
-                    break;
-
-                default:
-                    ShowErrorMessage.outOfRange("chức năng");
+                }
+                default -> ShowErrorMessage.outOfRange("chức năng");
             }
         } while (true);
     }
@@ -95,21 +91,11 @@ public class BookItemView extends View implements ListView<BookItem> {
     private long inputId(InputOption option) {
         long id;
         switch (option) {
-            case ADD:
-                System.out.println("Nhập Id");
-                break;
-            case CHECKOUT:
-                System.out.println("Nhập Id BookItem để checkout sách");
-                break;
-            case RETURN:
-                System.out.println("Nhập Id BookItem để trả sách");
-                break;
-            case UPDATE:
-                System.out.println("Nhập Id bạn muốn sửa");
-                break;
-            case DELETE:
-                System.out.println("Nhập Id bạn cần xoá: ");
-                break;
+            case ADD -> System.out.println("Nhập Id");
+            case CHECKOUT -> System.out.println("Nhập Id BookItem để checkout sách");
+            case RETURN -> System.out.println("Nhập Id BookItem để trả sách");
+            case UPDATE -> System.out.println("Nhập Id bạn muốn sửa");
+            case DELETE -> System.out.println("Nhập Id bạn cần xoá: ");
         }
         boolean isRetry = false;
         do {
@@ -117,26 +103,24 @@ public class BookItemView extends View implements ListView<BookItem> {
             if (tryInput.isReturn(String.valueOf(id))) return -1;
             boolean exist = bookItemService.existsById(id);
             switch (option) {
-                case ADD:
+                case ADD -> {
                     if (exist) {
                         System.out.println("Id này đã tồn tại. Vui lòng nhập id khác!");
                     }
                     isRetry = exist;
-                    break;
-
-                case CHECKOUT:
+                }
+                case CHECKOUT -> {
                     if (!exist) {
                         System.out.println("Không tìm thấy sách ! Vui lòng nhập lại");
                     }
                     isRetry = !exist;
-                    break;
-
-                case UPDATE:
+                }
+                case UPDATE -> {
                     if (!exist) {
                         System.out.println("Không tìm thấy id! Vui lòng nhập lại");
                     }
                     isRetry = !exist;
-                    break;
+                }
             }
         } while (isRetry);
         return id;
@@ -144,24 +128,16 @@ public class BookItemView extends View implements ListView<BookItem> {
 
     private String inputPublisher(InputOption option) {
         switch (option) {
-            case ADD:
-                System.out.println("Nhập nhà xuất bản: ");
-                break;
-            case UPDATE:
-                System.out.println("Nhập nhà xuất bản muốn sửa: ");
-                break;
+            case ADD -> System.out.println("Nhập nhà xuất bản: ");
+            case UPDATE -> System.out.println("Nhập nhà xuất bản muốn sửa: ");
         }
         return tryInput.tryString("Chủ đề");
     }
 
     private int inputPublicationAt(InputOption option) {
         switch (option) {
-            case ADD:
-                System.out.println("Nhập năm phát hành sách: ");
-                break;
-            case UPDATE:
-                System.out.println("Nhập năm phát hành sách mà bạn muốn sửa:");
-                break;
+            case ADD -> System.out.println("Nhập năm phát hành sách: ");
+            case UPDATE -> System.out.println("Nhập năm phát hành sách mà bạn muốn sửa:");
         }
         int publicationAt;
         do {
@@ -176,12 +152,8 @@ public class BookItemView extends View implements ListView<BookItem> {
 
     private double inputPrice(InputOption option) {
         switch (option) {
-            case ADD:
-                System.out.println("Nhập giá sách: ");
-                break;
-            case UPDATE:
-                System.out.println("Nhập giá sách bạn muốn sửa: ");
-                break;
+            case ADD -> System.out.println("Nhập giá sách: ");
+            case UPDATE -> System.out.println("Nhập giá sách bạn muốn sửa: ");
         }
         double price;
         do {
@@ -196,12 +168,10 @@ public class BookItemView extends View implements ListView<BookItem> {
     private BookFormat inputBookFormat(InputOption option) {
        while (true){
            switch (option) {
-               case ADD:
-                   System.out.println("Nhập kiểu định dạng của sách: PAPERBACK|HARDCOVER|NEWSPAPER|MAGAZINE|EBOOK ");
-                   break;
-               case UPDATE:
-                   System.out.println("Nhập kiểu định dạng của sách muốn sửa: PAPERBACK|HARDCOVER|NEWSPAPER|MAGAZINE|EBOOK ");
-                   break;
+               case ADD ->
+                       System.out.println("Nhập kiểu định dạng của sách: PAPERBACK|HARDCOVER|NEWSPAPER|MAGAZINE|EBOOK ");
+               case UPDATE ->
+                       System.out.println("Nhập kiểu định dạng của sách muốn sửa: PAPERBACK|HARDCOVER|NEWSPAPER|MAGAZINE|EBOOK ");
            }
            try {
                String input = tryInput.tryString("định dạng");
@@ -216,12 +186,8 @@ public class BookItemView extends View implements ListView<BookItem> {
     private BookStatus inputBookStatus(InputOption option) {
        while (true) {
            switch (option) {
-               case ADD:
-                   System.out.println("Nhập trạng thái của sách: AVAILABLE|RESERVED|LOANED|LOST");
-                   break;
-               case UPDATE:
-                   System.out.println("Nhập trạng thái sách muốn sửa: AVAILABLE|RESERVED|LOANED|LOST ");
-                   break;
+               case ADD -> System.out.println("Nhập trạng thái của sách: AVAILABLE|RESERVED|LOANED|LOST");
+               case UPDATE -> System.out.println("Nhập trạng thái sách muốn sửa: AVAILABLE|RESERVED|LOANED|LOST ");
            }
            try {
                String input = tryInput.tryString("trạng thái");
@@ -238,8 +204,8 @@ public class BookItemView extends View implements ListView<BookItem> {
         AsciiTable at = new AsciiTable();
         at.getRenderer().setCWC(new CWC_LongestLine());
         at.addRule();
-        AT_Row tCaption = at.addRow(null, null, null, null, null, null, null, null, null, null, caption);
-        tCaption.getCells().get(10).getContext().setTextAlignment(TextAlignment.CENTER);
+        AT_Row tCaption = at.addRow( null, null, null, null, null, null, null, null, null, caption);
+        tCaption.getCells().get(9).getContext().setTextAlignment(TextAlignment.CENTER);
         at.addRule();
         AT_Row tHead = at.addRow(tHeadings);
         tHead.setPaddingLeft(1);
@@ -248,10 +214,9 @@ public class BookItemView extends View implements ListView<BookItem> {
         int count = 0;
         for (BookItem bookItem : bookItems) {
             AT_Row row = at.addRow(++count, bookItem.getBookItemID(), bookItem.getBook().getTitle(), bookItem.getPublisher(), bookItem.getPublicationAt(),
-                    AppUtils.doubleToVND(bookItem.getPrice()), bookItem.getFormat(), bookItem.getStatus(),
+                    CurrencyUtils.doubleToVND(bookItem.getPrice()), bookItem.getFormat(), bookItem.getStatus(),
                     bookItem.getDateOfPurchase() == null ? "" : InstantUtils.instantToString(bookItem.getDateOfPurchase()),
-                    bookItem.getBorrowedAt() == null ? "" : InstantUtils.instantToString(bookItem.getBorrowedAt()),
-                    bookItem.getDueAt() == null ? "" : InstantUtils.instantToString(bookItem.getDueAt()));
+                    bookItem.getBorrowedAt() == null ? "" : InstantUtils.instantToString(bookItem.getBorrowedAt()));
             row.getCells().get(1).getContext().setTextAlignment(TextAlignment.RIGHT);
             row.getCells().get(4).getContext().setTextAlignment(TextAlignment.RIGHT);
             row.getCells().get(5).getContext().setTextAlignment(TextAlignment.RIGHT);

@@ -26,7 +26,6 @@ public class UserView extends View {//Single Responsibility Principle (SOLID)
 
     public void addUser() {
         do {
-            try {
                 long id = System.currentTimeMillis() / 1000;
                 String username = inputUsername();
                 String password = inputPassword();
@@ -37,11 +36,9 @@ public class UserView extends View {//Single Responsibility Principle (SOLID)
                 User user = new User(id, username, password, fullName, phone, email, address, Role.MEMBER);
                 setRole(user);
                 userService.add(user);
-                System.out.println("Đã thêm thành công!\uD83C\uDF8A");
-            } catch (Exception e) {
-                System.out.println("Nhập sai. vui lòng nhập lại!");
-            }
-        } while (AppUtils.isRetry(InputOption.ADD));
+                System.out.println("Đã thêm thành công!\uD83C\uDF8A \n Enter để tiếp tục, # để trở lại");
+
+        } while (tryInput.isReturn(sc.nextLine()));
     }
 
     public void setRole(User user) {
@@ -144,17 +141,14 @@ public class UserView extends View {//Single Responsibility Principle (SOLID)
 
     public String inputUsername() {
         System.out.println("Nhập Username (không bao gồm dấu cách, kí tự đặc biệt)");
-        System.out.print(" ⭆ ");
         String username;
         do {
-            if (!ValidateUtils.isUsernameValid(username = AppUtils.retryString("Username"))) {
+            if (!ValidateUtils.isUsernameValid(username = tryInput.tryString("Username"))) {
                 System.out.println(username + " của bạn không đúng định dạng! Vui lòng kiểm tra và nhập lại ");
-                System.out.print(" ⭆ ");
                 continue;
             }
             if (userService.existsByUsername(username)) {
                 System.out.println("Username này đã tồn tại. Vui lòng nhập lại");
-                System.out.print(" ⭆ ");
                 continue;
             }
             break;
@@ -174,8 +168,8 @@ public class UserView extends View {//Single Responsibility Principle (SOLID)
 
         System.out.print(" ⭆ ");
         String fullName;
-        while (!ValidateUtils.isNameValid(fullName = sc.nextLine())) {
-            System.out.println("Tên " + fullName + "không đúng định dạng." + " Vui lòng nhập lại!" + " (Tên phải viết hoa chữ cái đầu và không dấu)");
+        while (!ValidateUtils.isFirstCaseValid(fullName = sc.nextLine())) {
+            System.out.println("Tên " + fullName + "không đúng định dạng." + " Vui lòng nhập lại!" + " (Tên phải viết hoa chữ cái đầu.)");
             System.out.println("Nhập tên (vd: Ho Ten) ");
             System.out.print(" ⭆ ");
         }
@@ -240,7 +234,7 @@ public class UserView extends View {//Single Responsibility Principle (SOLID)
         String password;
         while (!ValidateUtils.isPasswordValid(password = sc.nextLine())) {
             System.out.println("Mật khẩu yếu! Vui lòng nhập lại ");
-            System.out.print(" ⭆ ");
+            System.out.print("⭆ ");
         }
         return password;
     }
@@ -255,7 +249,13 @@ public class UserView extends View {//Single Responsibility Principle (SOLID)
                 break;
         }
         System.out.print(" ⭆ ");
-        return sc.nextLine();
+        String address;
+        while (!ValidateUtils.isFirstCaseValid(address = sc.nextLine())) {
+            System.out.println("Địa chỉ " + address + "không đúng định dạng." + " Vui lòng nhập lại!" + " (Địa chỉ phải viết hoa chữ cái đầu.)");
+            System.out.println("Nhập địa chỉ (vd: Huế) ");
+            System.out.print(" ⭆ ");
+        }
+        return address;
     }
 
     public void login() {

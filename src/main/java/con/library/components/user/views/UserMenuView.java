@@ -10,42 +10,29 @@ public class UserMenuView extends View {
     public static void launch() {
         Scanner scanner = new Scanner(System.in);
         UserView userView = new UserView();
-        int option = -1;
+        int option;
         do {
             menuUser();
-            try {
-                do {
-                    System.out.println("Chọn chức năng");
-                    System.out.print(" ⭆ ");
-                    option = Integer.parseInt(scanner.nextLine());
-                    if (option > 4 || option < 1)
-                        System.out.println("Chọn chức năng không đúng! Vui lòng chọn lại");
-                } while (option > 4 || option < 1);
-
-                switch (option) {
-                    case 1:
-                        userView.addUser();
-                        break;
-                    case 2:
-                        userView.updateUser();
-                        break;
-                    case 3:
-                        userView.showUsers(InputOption.SHOW);
-                        break;
-                    case 4:
-                        LibrarianView.menuOption();
-                        break;
-                    default:
-                        System.out.println("Chọn chức năng không đúng! Vui lòng chọn lại");
-                        break;
-                }
-            } catch (Exception ex) {
-                System.out.println("Nhập sai! vui lòng nhập lại");
+            option = tryInput.tryInt("lựa chọn");
+            switch (option) {
+                case 1:
+                    userView.addUser();
+                    break;
+                case 2:
+                    userView.updateUser();
+                    break;
+                case 3:
+                    userView.showUsers(InputOption.SHOW);
+                    break;
+                default:
+                    System.out.println("Chọn chức năng không đúng! Vui lòng chọn lại");
+                    break;
             }
-        } while (option != 4);
+        } while (tryInput.isReturn(String.valueOf(option)));
     }
 
     public static void menuUser() {
-        tbConverter.convertMtplCol("USERS MANAGER", "Thêm người dùng", "Sửa thông tin người dùng", "Hiện danh sách người dùng ");
+        System.out.println(tbConverter.convertMtplCol("USERS MANAGER", "Thêm người dùng", "Sửa thông tin người dùng", "Hiện danh sách người dùng "));
+        ;
     }
 }

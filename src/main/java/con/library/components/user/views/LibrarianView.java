@@ -14,7 +14,7 @@ public class LibrarianView extends UserView {
     public static void menuOption() {
         do {
             mainMenu();
-            System.out.println("\nChọn chức năng ");
+            System.out.print("\nChọn chức năng ");
             System.out.print("⭆ ");
             int number = tryInput.tryInt("chức năng");
             if (number == -1) break;
@@ -23,9 +23,8 @@ public class LibrarianView extends UserView {
                 case 2 -> BookItemMenuView.launch();
                 case 3 -> BookLendingMenu.launch();
                 case 4 -> UserMenuView.launch();
-                default -> {
-                    ShowErrorMessage.outOfRange("chức năng");
-                }
+                default -> ShowErrorMessage.outOfRange("chức năng");
+
             }
         } while (true);
     }

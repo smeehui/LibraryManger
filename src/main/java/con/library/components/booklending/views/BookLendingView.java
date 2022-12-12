@@ -14,10 +14,12 @@ import con.library.components.user.services.UserService;
 import con.library.services.Constants;
 import con.library.components.books.services.BookItemService;
 import con.library.components.books.services.IBookItemService;
-import con.library.utils.AppUtils;
+import con.library.utils.CurrencyUtils;
 import con.library.utils.InputRetry;
 import con.library.utils.InstantUtils;
 import con.library.views.InputOption;
+import con.library.views.ListView;
+import con.library.views.ShowErrorMessage;
 import con.library.views.View;
 import de.vandermeer.asciitable.*;
 import de.vandermeer.asciithemes.a8.A8_Grids;
@@ -27,7 +29,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BookLendingView extends View {
+public class BookLendingView extends View implements ListView<BookLending> {
     private final IBookLendingService bookLendingService;
     private final IUserService userService;
     private final IBookItemService bookItemService;
@@ -40,73 +42,38 @@ public class BookLendingView extends View {
         userService = UserService.getInstance();
         bookItemService = BookItemService.getInstance();
         bookService = BookService.getInstance();
+        caption = "DANH SÁCH MƯỢN/TRẢ SÁCH";
+        tHeadings = new String[] {"Id", "Id BookItem", "Id người dùng", "Tên đầy đủ", "Trạng thái mượn",
+                "Ngày Mượn Sách", "Ngày Đến Hạn", "Ngày Trả Sách"};
     }
 
     public void update() {
-        boolean isRetry;
         do {
             showBooksLending(InputOption.UPDATE);
             long id = inputLendingId(InputOption.UPDATE);
-            System.out.println("┌ - - - - - - -  SỬA - - - - - - - ┐");
-            System.out.println("|   1. Sửa trạng thái Lending      |");
-            System.out.println("|   2. Quay lại Menu               |");
-            System.out.println("└ - - - - - - - - - - - - - - - - -┘");
-            System.out.println("Chọn chức năng: ");
-            int option = AppUtils.retryChoose(1, 2);
+            if(tryInput.isReturn(String.valueOf(id))) break;
+            System.out.println(tbConverter.convertSingleCol("CHỈNH SỬA TRẠNG THÁI"));
             BookLending newBookLending = new BookLending();
             newBookLending.setId(id);
-
-            switch (option) {
-                case 1 -> {
-                    LendingStatus lendingStatus = inputLendingStatus(InputOption.ADD);
-                    newBookLending.setStatus(lendingStatus);
-                    bookLendingService.update(newBookLending);
-                    System.out.println("Cập nhập trạng thái Lending thành công");
-                }
-                case 2 -> showBooksLending(InputOption.UPDATE);
-            }
-            isRetry = option != 2 && AppUtils.isRetry(InputOption.UPDATE);
-        } while (isRetry);
+            LendingStatus lendingStatus = inputLendingStatus(InputOption.ADD);
+            newBookLending.setStatus(lendingStatus);
+            bookLendingService.update(newBookLending);
+            System.out.println("Cập nhập trạng thái mượn sách thành công! Nhấn enter để tiếp tục,  # để trở lại.");
+            if ((tryInput.isReturn(sc.nextLine()))) break;
+        } while (true);
     }
-
-
-    public void showBooksLending(InputOption inputOption) {
-        System.out.println("--------------------------------------------------------------- BOOK LENDING --------------------------------------------------------------------");
-        System.out.printf(" %-15s %-15s %-15s  %-15s %-15s %-20s %-18s %-18s \n",
-                "Id BookLending",
-                "Id BookItem",
-                "Id User",
-                "Full Name",
-                "Lending Status",
-                "Ngày Mượn Sách",
-                "Ngày Đến Hạn",
-                "Ngày Trả Sách"
-
-        );
-        for (BookLending bookLending : bookLendingService.findAll()) {
-
-            System.out.printf(" %-15s %-15s %-15s %-18s %-15s %-18s %-18s %-18s \n",
-                    bookLending.getId(),
-                    bookLending.getBookItemId(),
-                    bookLending.getUserId(),
-                    userService.findById(bookLending.getUserId()).getFullName(),
-                    bookLending.getStatus(),
-                    bookLending.getCreatedAt() == null ? "" : InstantUtils.instantToString(bookLending.getCreatedAt()),
-                    bookLending.getDueAt() == null ? "" : InstantUtils.instantToString(bookLending.getDueAt()),
-                    bookLending.getReturnAt() == null ? "" : InstantUtils.instantToString(bookLending.getReturnAt())
-            );
-        }
-        System.out.println("----------------------------------------------------------------------------------------------------------------------------------------------\n");
-        if (inputOption == InputOption.SHOW)
-            AppUtils.isRetry(InputOption.SHOW);
-    }
-
     private LendingStatus inputLendingStatus(InputOption option) {
-        switch (option) {
-            case ADD -> System.out.println("Nhập Lending status : LENDING | DUE | RETURN");
-            case UPDATE -> System.out.println("Nhập Lending status muốn sửa: LENDING | DUE | RETURN ");
-        }
-        return LendingStatus.parseLendingStatus(AppUtils.retryString("lending status"));
+       while (true) {
+           switch (option) {
+               case ADD -> System.out.println("Nhập Lending status : LENDING | DUE | RETURN");
+               case UPDATE -> System.out.println("Nhập Lending status muốn sửa: LENDING | DUE | RETURN ");
+           }
+           try {
+               return LendingStatus.parseLendingStatus(tryInput.tryString("lending status"));
+           } catch (IllegalArgumentException e) {
+               ShowErrorMessage.syntax("sai định dạng trạng thái sách");
+           }
+       }
     }
 
     private long inputBookItemId(InputOption option) {
@@ -153,8 +120,13 @@ public class BookLendingView extends View {
                 case UPDATE -> {
                     if (!exist) {
                         System.out.println("Không tìm thấy Id! Vui lòng nhập lại");
+                        isRetry = true;
+                        continue;
                     }
-                    isRetry = !exist;
+                    if (bookLendingService.findById(id).getStatus().equals(LendingStatus.RETURN)){
+                        System.out.println("Sách đã được trả, không thể sửa.");
+                        isRetry = true;
+                    }
                 }
             }
         } while (isRetry);
@@ -257,68 +229,35 @@ public class BookLendingView extends View {
     }
 
     public void returnBook() {
-        long userId = inputUserId();
-        if (tryInput.isReturn(String.valueOf(userId))) return;
-        boolean hasUserNotLent = viewBookLendingByUserId(userId);
-        if (!hasUserNotLent) return;
-        long bookItemId;
-        BookItem bookItem;
-        do {
-            bookItemId = inputBookItemId(InputOption.RETURN);
-            if (tryInput.isReturn(String.valueOf(bookItemId))) return;
-            bookItem = bookItemService.findById(bookItemId);
-            if (bookItem == null) {
-                System.out.println("Nhập sai ID sách mượn.");
+        do{
+            long userId = inputUserId();
+            if (tryInput.isReturn(String.valueOf(userId))) break;
+            boolean hasUserNotLent = viewBookLendingByUserId(userId);
+            if (!hasUserNotLent) {
+                System.out.println("Người dùng chưa mượn sách");
                 sc.nextLine();
+                continue;
             }
-        } while (bookItem == null);
-        BookLending bookLending = bookLendingService.findByBookItemIdAndUserIdAndStatus(bookItem.getBookItemID(), userId, LendingStatus.RETURN);
-        if (bookLending == null) {
-            System.out.println("Người dùng này chưa mượn sách ở thư viện!");
-            return;
-        } else showBooksLendingBill(bookLending);
-//            System.out.println("--------------------------------------------------------------- THÔNG TIN BOOKLENDING --------------------------------------------------------------------");
-//        System.out.printf(" %-15s %-15s %-15s %-10s %-18s %-18s %-18s %-18s %-13s \n",
-//                "Id BookLending",
-//                "Tên sách",
-//                "Full Name",
-//                "Lending Status",
-//                "Ngày Mượn Sách",
-//                "Ngày Đến Hạn",
-//                "Ngày Trả Sách",
-//                "Số ngày quá hạn",
-//                "Số tiền phạt"
-//
-//        );
-//        Instant dueAt = bookLending.getDueAt();
-//        long millis = System.currentTimeMillis() - dueAt.toEpochMilli();
-//        System.out.printf(" %-15s %-15s %-15s %-10s %-18s %-18s %-18s %-18s %-13s \n",
-//                bookLending.getId(),
-//                bookItem.getBook().getTitle(),
-//                userService.findById(bookLending.getUserId()).getFullName(),
-//                bookLending.getStatus(),
-//                bookLending.getCreatedAt() == null ? "" : InstantUtils.instantToString(bookLending.getCreatedAt()),
-//                bookLending.getDueAt() == null ? "" : InstantUtils.instantToString(bookLending.getDueAt()),
-//                InstantUtils.instantToString(Instant.now()),
-////                bookLending.getReturnAt() == null ? "" : InstantUtils.instantToString(bookLending.getReturnAt()),
-//                millis > 0 ? millis / 86400000 : 0,
-//                millis > 0 ? millis / 86400000 * Constants.FINE_AMOUNT : 0
-//
-//        );
-//        System.out.println("----------------------------------------------------------------------------------------------------------------------------------------------\n");
-
-
-//        Duration duration = Duration.between(bookLending.getCreatedAt(), bookLending.getReturnAt());
-//        System.out.println("Số ngày mượn cuốn sách tính tới hiện tại là: " + duration.toDays());
-//
-//        if (duration.toDays() > Constants.MAX_LENDING_DAYS) {
-//            System.out.println("Người dùng vượt quá số ngày cho phép");
-//            System.out.println("Người dùng bị phạt 100.000đ");
-//            return;
-//        }
-        bookLendingService.returnBook(bookItemId, bookLending.getUserId());
-        System.out.println("Bạn đã trả sách thành công \uD83C\uDF8A");
-
+            long bookItemId;
+            BookItem bookItem ;
+            do {
+                bookItemId = inputBookItemId(InputOption.RETURN);
+                if (tryInput.isReturn(String.valueOf(bookItemId))) return;
+                bookItem = bookItemService.findById(bookItemId);
+                if (bookItem == null) {
+                    System.out.println("Nhập sai ID sách mượn.");
+                    sc.nextLine();
+                }
+            } while (bookItem == null);
+            BookLending bookLending = bookLendingService.findByBookItemIdAndUserIdAndStatus(bookItem.getBookItemID(), userId, LendingStatus.RETURN);
+            if (bookLending == null) {
+                System.out.println("Người dùng này chưa mượn sách ở thư viện!");
+                continue;
+            } else showBooksLendingBill(bookLending);
+            bookLendingService.returnBook(bookItemId, bookLending.getUserId());
+            System.out.println("Bạn đã trả sách thành công \uD83C\uDF8A! Nhấn enter để tiếp tục, # để trở lại.");
+            if (tryInput.isReturn(sc.nextLine())) break;
+        } while (true);
     }
 
     private void showBooksLendingBill(BookLending bookLending) {
@@ -343,7 +282,7 @@ public class BookLendingView extends View {
         double fine = numberOfExceedDays*Constants.FINE_AMOUNT;
         AT_Row row = tb.addRow(title, lendingStatus, createdAt, dueAtStr,returnAt,
                 numberOfExceedDays==0?"":String.valueOf(numberOfExceedDays),
-                fine==0?"":String.valueOf(fine));
+                fine==0?"": CurrencyUtils.doubleToVND(fine));
         row.getCells().get(5).getContext().setTextAlignment(TextAlignment.RIGHT);
         row.getCells().get(6).getContext().setTextAlignment(TextAlignment.RIGHT);
         row.setPaddingRight(1);
@@ -352,27 +291,6 @@ public class BookLendingView extends View {
         tb.getRenderer().setCWC(new CWC_LongestLine());
         System.out.println(tb.render(100));
     }
-
-    private void viewBookLendingDetails(String bookLendingByUserId) {
-        String[] items = bookLendingByUserId.split(",");
-        tHeadings = new String[]{"ID", "BookItem ID", "Tiêu đề", "Trạng thái", "Ngày mượn sách", "Hạn trả sách", "Ngày trả sách"};
-        AsciiTable at = new AsciiTable();
-        at.getRenderer().setCWC(new CWC_LongestLine());
-        at.addRule();
-        AT_Row tHead = at.addRow((Object[]) tHeadings);
-        tHead.getCells().get(0).getContext().setTextAlignment(TextAlignment.RIGHT);
-        tHead.setPaddingLeft(1);
-        tHead.setPaddingRight(1);
-        at.setTextAlignment(TextAlignment.CENTER);
-        at.addRule();
-        AT_Row row = at.addRow((Object[]) items);
-        row.setPaddingLeft(1);
-        row.setPaddingRight(1);
-        at.addRule();
-        System.out.println(at.getRenderer().getCWC().toString());
-        System.out.println(at.render());
-    }
-
     private boolean viewBookLendingByUserId(long userId) {
         List<BookLending> result = getNotReturnedBook(userId);
         if (result.isEmpty()) return false;
@@ -430,5 +348,46 @@ public class BookLendingView extends View {
             System.out.println("Không tìm thấy người dùng ! Vui lòng nhập lại");
         }
         return userId;
+    }
+
+    @Override
+    public void showList(InputOption inputOption, List<BookLending> items) {
+        AsciiTable at = new AsciiTable();
+        at.getRenderer().setCWC(new CWC_LongestLine());
+        at.addHeavyRule();
+        at.addRow(null, null, null, null, null, null, null, caption);
+        at.addHeavyRule();
+        AT_Row tHead = at.addRow(tHeadings);
+        tHead.setPaddingLeft(1);
+        tHead.setPaddingRight(1);
+        at.setTextAlignment(TextAlignment.CENTER);
+        at.addRule();
+        int count = 0;
+        for (BookLending bookLending : items) {
+            AT_Row row = at.addRow(bookLending.getId(),
+                    bookLending.getBookItemId(),
+                    bookLending.getUserId(),
+                    userService.findById(bookLending.getUserId()).getFullName(),
+                    bookLending.getStatus(),
+                    bookLending.getCreatedAt() == null ? "" : InstantUtils.instantToString(bookLending.getCreatedAt()),
+                    bookLending.getDueAt() == null ? "" : InstantUtils.instantToString(bookLending.getDueAt()),
+                    bookLending.getReturnAt() == null ? "" : InstantUtils.instantToString(bookLending.getReturnAt()));
+            row.getCells().get(0).getContext().setTextAlignment(TextAlignment.RIGHT);
+            row.getCells().get(1).getContext().setTextAlignment(TextAlignment.RIGHT);
+            row.getCells().get(2).getContext().setTextAlignment(TextAlignment.RIGHT);
+            row.getCells().get(4).getContext().setTextAlignment(TextAlignment.RIGHT);
+            row.setPaddingLeft(1);
+            row.setPaddingRight(1);
+            at.addRule();
+        }
+        at.getContext().setGrid(A8_Grids.lineDoubleBlocks());
+        System.out.println(at.render(100));
+        if (inputOption == InputOption.SHOW) {
+            System.out.println("Nhấn enter để trở lại");
+            sc.nextLine();
+        }
+    }
+    public void showBooksLending(InputOption inputOption) {
+        showList(inputOption,bookLendingService.findAll());
     }
 }

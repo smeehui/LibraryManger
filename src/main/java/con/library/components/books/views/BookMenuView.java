@@ -42,6 +42,5 @@ public class BookMenuView extends View {
 
     public static void menuBook() {
         System.out.println(tbConverter.convertMtplCol("MENU BOOK", "Thêm sách", "Chỉnh sửa sách", "Xóa sách", "Hiển thị danh sách sách", "Tìm kiếm sách theo tên"));
-
     }
 }
