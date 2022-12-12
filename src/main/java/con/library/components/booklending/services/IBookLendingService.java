@@ -5,6 +5,8 @@ import con.library.components.booklending.model.BookLending;
 import con.library.components.booklending.model.LendingStatus;
 import con.library.services.IAbstractService;
 
+import java.util.List;
+
 public interface IBookLendingService extends IAbstractService<BookLending, Long> {
 
     void add(BookLending newUser);
@@ -24,4 +26,6 @@ public interface IBookLendingService extends IAbstractService<BookLending, Long>
     BookLending findByBookItemIdAndUserIdAndStatus(long bookItemId, long userId, LendingStatus status);
 
     BookLending findByUserId(long userId);
+
+    List<BookLending> findBookLendingByUserId(long userId);
 }

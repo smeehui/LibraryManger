@@ -11,5 +11,4 @@ public abstract class View{
     public static InputRetry tryInput = InputRetry.getInstance();
     public String caption;
     public String[] tHeadings;
-
 }

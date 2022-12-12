@@ -63,6 +63,17 @@ public class BookLendingService implements IBookLendingService {
     }
 
     @Override
+    public List<BookLending> findBookLendingByUserId(long userId) {
+        List<BookLending> bookLendingList = findAll();
+        List<BookLending> result = new ArrayList<>();
+        for (BookLending bookLending : bookLendingList) {
+            if (bookLending.getUserId() == userId) {
+                result.add(bookLending);
+            }
+        }return result;
+    }
+
+    @Override
     public boolean isBookIssuedQuotaExceeded(long userId) {
         return countBookItemLendingByUserIdAndStatus(userId) >= Constants.MAX_BOOKS_ISSUED_TO_A_USER;
     }
@@ -73,8 +84,8 @@ public class BookLendingService implements IBookLendingService {
         List<BookLending> bookLendingList = findAll();
         for (BookLending bookLending : bookLendingList)
             //tim lending co status != Return && userId ==userId tham so
-            if (bookLending.getStatus() != LendingStatus.RETURN &&
-                    bookLending.getUserId() == userId)
+            if (bookLending.getStatus() != LendingStatus.RETURN
+                && bookLending.getUserId() == userId)
                 count += 1;
         return count;
     }
