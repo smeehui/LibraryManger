@@ -167,6 +167,17 @@ public class FineService implements IFineService {
         }
         return results;
     }
+
+    @Override
+    public boolean isExistByUserId(long userId) {
+        for (Fine fine : findAll()) {
+            if (fine.getUserId() == userId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public List<Fine> findByUserIdAndStatus(long id, FineStatus status) {
         List<Fine> results = new ArrayList<>();

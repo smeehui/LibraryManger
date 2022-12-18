@@ -19,6 +19,7 @@ public interface IFineService extends IAbstractService<Fine,Long> {
      List<Fine> findUnpaidFines ();
 
     List<Fine> findByUserId(long id);
+    boolean isExistByUserId(long userId);
 
     List<Fine> findByUserIdAndStatus(long id, FineStatus status);
 }

@@ -21,7 +21,7 @@ public class LibrarianView extends View {
                 case 2 -> BookItemMenuView.launch(id);
                 case 3 -> BookLendingMenu.launch();
                 case 4 -> UserMenuView.launch();
-                case 5 -> FineMenuView.launch();
+                case 5 -> FineMenuView.launch(id);
                 default -> ShowErrorMessage.outOfRange("chức năng");
             }
         } while (true);

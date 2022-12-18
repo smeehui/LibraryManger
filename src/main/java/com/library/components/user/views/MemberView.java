@@ -1,16 +1,16 @@
 package com.library.components.user.views;
 
-import com.library.components.booklending.model.LendingStatus;
+import com.library.components.booklending.model.BookLending;
 import com.library.components.booklending.services.BookLendingService;
 import com.library.components.booklending.services.IBookLendingService;
 import com.library.components.booklending.views.BookLendingView;
+import com.library.components.fine.views.FineView;
+import com.library.components.user.models.User;
 import com.library.components.user.services.IUserService;
 import com.library.components.user.services.UserService;
 import com.library.views.InputOption;
 import com.library.views.ShowErrorMessage;
 import com.library.views.View;
-import com.library.components.booklending.model.BookLending;
-import com.library.components.user.models.User;
 import de.vandermeer.asciitable.AT_Row;
 import de.vandermeer.asciitable.AsciiTable;
 import de.vandermeer.asciitable.CWC_LongestLine;
@@ -25,11 +25,13 @@ public class MemberView extends UserView {
     private final IBookLendingService bookLendingService;
     private final IUserService userService;
     private final BookLendingView bookLendingView;
+    private final FineView fineView;
 
     protected MemberView() {
         bookLendingService = BookLendingService.getInstance();
         userService = UserService.getInstance();
         bookLendingView = BookLendingView.getInstance();
+        fineView = FineView.getInstance();
     }
 
     public static void launch(long id) {
@@ -56,6 +58,9 @@ public class MemberView extends UserView {
                     break;
                 case 4:
                     showBookLendingInfo(id);
+                    break;
+                case 5:
+                    fineView.findByUserId(id);
                     break;
                 case -1:
                     return;
@@ -122,14 +127,14 @@ public class MemberView extends UserView {
     }
 
     private void showUpdateMenu() {
-        System.out.println(tbConverter.convertMtplCol("SỬA THÔNG TIN","Sửa tên","Sửa số điện thoại","Sửa địa chỉ"));
+        System.out.println(tbConverter.convertMtplCol("SỬA THÔNG TIN", "Sửa tên", "Sửa số điện thoại", "Sửa địa chỉ"));
     }
 
 
     public void showUserInfo(long id) {
-        List<User> user= new ArrayList<>();
+        List<User> user = new ArrayList<>();
         user.add(userService.findById(id));
-        showList(InputOption.UPDATE,user);
+        showList(InputOption.UPDATE, user);
     }
 
 
@@ -140,7 +145,7 @@ public class MemberView extends UserView {
 
 
     public void showMenu() {
-        System.out.println(tbConverter.convertMtplCol("MENU CHÍNH","Mượn sách", "Trả sách","Sửa thông tin cá nhân", "Xem thông tin mượn sách"));
+        System.out.println(tbConverter.convertMtplCol("MENU CHÍNH", "Mượn sách", "Trả sách", "Sửa thông tin cá nhân", "Xem thông tin mượn sách"));
     }
 
 }

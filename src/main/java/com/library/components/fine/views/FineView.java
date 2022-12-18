@@ -6,6 +6,8 @@ import com.library.components.fine.models.Fine;
 import com.library.components.fine.models.FineStatus;
 import com.library.components.fine.services.FineService;
 import com.library.components.fine.services.IFineService;
+import com.library.components.user.models.Role;
+import com.library.components.user.models.User;
 import com.library.components.user.services.IUserService;
 import com.library.components.user.services.UserService;
 import com.library.components.user.views.UserView;
@@ -53,7 +55,7 @@ public class FineView extends View implements ListView<Fine> {
         return fine;
     }
 
-    public void viewUnpaidFines() {
+    public void viewUnpaidFines(long userId) {
        List<Fine> unPaidFines = fineService.findUnpaidFines();
        if (unPaidFines.isEmpty()) {
            System.out.println("Không có người dùng chưa nộp phạt");
@@ -65,7 +67,7 @@ public class FineView extends View implements ListView<Fine> {
            int option = tryInput.tryInt("lựa chọn");
            if (tryInput.isReturn(String.valueOf(option))) break;
            switch (option) {
-               case 1 -> payByFineId();
+               case 1 -> payByFineIdView(userId);
                case 2 -> payByUserID();
                default -> ShowErrorMessage.outOfRange("lựa chọn");
            }
@@ -102,36 +104,49 @@ public class FineView extends View implements ListView<Fine> {
        }while (true);
     }
 
-    private void payByFineId() {
+    private void payByFineIdView(long userId) {
         do {
-            long fineId = inputId("khoản phạt");
-            if (tryInput.isReturn(String.valueOf(fineId))) break;
-            Fine fine = fineService.findById(fineId);
-            if (fine == null) {
-                System.out.println("Không tìm thấy khoản phạt.");
-                if (tryInput.isReturn(sc.nextLine())) break;
-                continue;
+            List<Fine> fineList = fineService.findByUserId(userId);
+            if (fineList.isEmpty()){
+                System.out.println("Người dùng chưa bị phạt");
+                return;
             }
-            List<Fine> fines = new ArrayList<>();
-            fines.add(fine);
-            if (fine.getStatus().equals(FineStatus.PAID)) {
-                showList(InputOption.FINE_EDIT,fines);
-                System.out.println("Khoản phạt đã thanh toán");
-            }else {
-                showList(InputOption.FINE_EDIT,fines);
-                System.out.println("Nhấn enter để thanh toán khoản phạt.");
-                if (tryInput.isReturn(sc.nextLine())) break;
-                else {
-                    Fine paidFine = new Fine();
-                    paidFine.setId(fineId);
-                    paidFine.setStatus(FineStatus.PAID);
-                    paidFine.setPaidAt();
-                    fineService.update(paidFine);
-                    System.out.println("Thanh toán thành công, nhấn enter.");
+            for (Fine unpaidFine : fineList){
+                if (unpaidFine.getStatus().equals(FineStatus.UNPAID)){
+                    long fineId = inputId("khoản phạt");
+                    if (tryInput.isReturn(String.valueOf(fineId))) break;
+                    Fine fine = fineService.findById(fineId);
+                    if (fine == null) {
+                        System.out.println("Không tìm thấy khoản phạt.");
+                        if (tryInput.isReturn(sc.nextLine())) break;
+                        break;
+                    }
+                    paidFine(fine);
                 }
             }
             if (tryInput.isReturn(sc.nextLine())) break;
         }while (true);
+    }
+
+    private void paidFine(Fine fine) {
+        List<Fine> fines = new ArrayList<>();
+        fines.add(fine);
+        if (fine.getStatus().equals(FineStatus.PAID)) {
+            showList(InputOption.FINE_EDIT,fines);
+            System.out.println("Khoản phạt đã thanh toán");
+        }else {
+            showList(InputOption.FINE_EDIT,fines);
+            System.out.println("Nhấn enter để thanh toán khoản phạt.");
+            if (tryInput.isReturn(sc.nextLine()));
+            else {
+                Fine paidFine = new Fine();
+                paidFine.setId(fine.getId());
+                paidFine.setStatus(FineStatus.PAID);
+                paidFine.setPaidAt();
+                fineService.update(paidFine);
+                System.out.println("Thanh toán thành công, nhấn enter.");
+            }
+        }
     }
 
     private long inputId(String field) {
@@ -140,27 +155,27 @@ public class FineView extends View implements ListView<Fine> {
         return id;
     }
 
-    public void findByUserId() {
+    public void findByUserId(long userId) {
+        User user = userService.findById(userId);
         do {
-            userView.showList(InputOption.UPDATE,userService.findAll());
-            long id = inputId("người dùng");
-            if (tryInput.isReturn(String.valueOf(id))) break;
-            List<Fine> result = fineService.findByUserId(id);
-            if (result.isEmpty()) {
-                System.out.println("Không tìm thấy người dùng, hoặc người dùng chưa bị phạt.");
+            if (user.getRole().equals(Role.LIBRARIAN)){
+                userView.showList(InputOption.UPDATE,userService.findAll());
+                userId= inputId("người dùng");
+            }
+            if (tryInput.isReturn(String.valueOf(userId))) break;
+            boolean isExist = fineService.isExistByUserId(userId);
+            if (isExist) {
+                if(user.getRole().equals(Role.LIBRARIAN)){
+                    System.out.println("Không tìm thấy người dùng, hoặc người dùng chưa bị phạt.");
+                }else System.out.println("Bạn chưa bị phạt tiền.");
                 if (tryInput.isReturn(sc.nextLine())) break;
-            }else {
-                for (Fine fine : result){
-                    if (fine.getStatus().equals(FineStatus.UNPAID)){
-                        showList(InputOption.FINE_EDIT, result);
-                        payByFineId();
-                        return;
-                    }
-                }
-                showList(InputOption.FINE_SHOW,result);
+            }else{
+                payByFineIdView(userId);
             }
         } while (true);
     }
+
+
     public void showHistory() {
         showList(InputOption.FINE_SHOW,fineService.findAll());
     }
