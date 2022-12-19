@@ -145,7 +145,7 @@ public class MemberView extends UserView {
 
 
     public void showMenu() {
-        System.out.println(tbConverter.convertMtplCol("MENU CHÍNH", "Mượn sách", "Trả sách", "Sửa thông tin cá nhân", "Xem thông tin mượn sách"));
+        System.out.println(tbConverter.convertMtplCol("MENU CHÍNH", "Mượn sách", "Trả sách", "Sửa thông tin cá nhân", "Xem thông tin mượn sách","Xem thông tin phạt"));
     }
 
 }

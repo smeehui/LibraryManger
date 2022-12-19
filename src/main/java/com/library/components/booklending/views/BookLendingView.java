@@ -69,13 +69,15 @@ public class BookLendingView extends View implements ListView<BookLending> {
 
     public void update() {
         do {
-            showBooksLending(InputOption.UPDATE);
+            boolean status = showBooksLending(InputOption.UPDATE);
+            if (!status) break;
             long id = inputLendingId(InputOption.UPDATE);
             if (tryInput.isReturn(String.valueOf(id))) break;
             System.out.println(tbConverter.convertSingleCol("CHỈNH SỬA TRẠNG THÁI"));
             BookLending newBookLending = new BookLending();
             newBookLending.setId(id);
             LendingStatus lendingStatus = inputLendingStatus(InputOption.ADD);
+            if (tryInput.isReturn(String.valueOf(lendingStatus))) break;
             newBookLending.setStatus(lendingStatus);
             bookLendingService.update(newBookLending);
             System.out.println("Cập nhập trạng thái mượn sách thành công! Nhấn enter để tiếp tục,  # để trở lại.");
@@ -100,8 +102,8 @@ public class BookLendingView extends View implements ListView<BookLending> {
     private long inputBookItemId(InputOption option) {
         long id;
         switch (option) {
-            case CHECKOUT -> System.out.println("Nhập Id BookItem để checkout sách");
-            case RETURN -> System.out.println("Nhập Id BookItem để trả sách");
+            case CHECKOUT -> System.out.println("Nhập mã sách để mượn");
+            case RETURN -> System.out.println("Nhập mã sách để trả");
         }
         boolean isRetry = false;
         do {
@@ -126,7 +128,6 @@ public class BookLendingView extends View implements ListView<BookLending> {
             case ADD -> System.out.println("Nhập Id BookLending ");
             case UPDATE -> System.out.println("Nhập Id BookLending bạn muốn sửa");
         }
-        boolean isRetry = false;
         do {
             id = tryInput.tryLong("id của BookLending");
             if (tryInput.isReturn(String.valueOf(id))) return -1;
@@ -135,23 +136,23 @@ public class BookLendingView extends View implements ListView<BookLending> {
                 case ADD -> {
                     if (exist) {
                         System.out.println("Id này đã tồn tại. Vui lòng nhập Id khác!");
+                        continue;
                     }
-                    isRetry = exist;
+                    return id;
                 }
                 case UPDATE -> {
                     if (!exist) {
                         System.out.println("Không tìm thấy Id! Vui lòng nhập lại");
-                        isRetry = true;
                         continue;
                     }
                     if (bookLendingService.findById(id).getStatus().equals(LendingStatus.RETURN)) {
                         System.out.println("Sách đã được trả, không thể sửa.");
-                        isRetry = true;
+                        continue;
                     }
+                    return id;
                 }
             }
-        } while (isRetry);
-        return id;
+        } while (true);
     }
 
     public void checkoutBook(long id) {
@@ -195,9 +196,9 @@ public class BookLendingView extends View implements ListView<BookLending> {
             sc.nextLine();
             return;
         }
-
         bookLendingService.lendBook(user.getId(), bookItem.getBookItemID());
         System.out.println("Bạn đã mượn sách thành công!");
+        sc.nextLine();
     }
 
 
@@ -216,7 +217,7 @@ public class BookLendingView extends View implements ListView<BookLending> {
                 }
             } else userId = currentUser.getId();
             long bookItemId = 0;
-            BookItem bookItem=null;
+            BookItem bookItem = null;
             do {
                 List<BookLending> availableBooklendings = bookLendingService.findBookLendingByUserIdAndStatus(userId, LendingStatus.LENDING);
                 if (availableBooklendings.isEmpty()) {
@@ -262,10 +263,10 @@ public class BookLendingView extends View implements ListView<BookLending> {
         String dueAtStr = InstantUtils.instantToString(bookLending.getDueAt());
         bookLending.setReturnAt(Instant.now());
         Instant returnAt = Instant.now();
-        long numberOfExceedDays = InstantUtils.countGapTime(returnAt,bookLending.getDueAt());
+        long numberOfExceedDays = InstantUtils.countGapTime(returnAt, bookLending.getDueAt());
         AT_Row row = tb.addRow(title, lendingStatus, createdAt, dueAtStr, InstantUtils.instantToString(returnAt),
-                numberOfExceedDays == 0 ? "" : String.valueOf(numberOfExceedDays),
-                numberOfExceedDays <0 ? "" : CurrencyUtils.doubleToVND(numberOfExceedDays*Constants.FINE_AMOUNT));
+                numberOfExceedDays < 0 ? "" : String.valueOf(numberOfExceedDays),
+                numberOfExceedDays < 0 ? "" : CurrencyUtils.doubleToVND(numberOfExceedDays * Constants.FINE_AMOUNT));
         row.getCells().get(5).getContext().setTextAlignment(TextAlignment.RIGHT);
         row.getCells().get(6).getContext().setTextAlignment(TextAlignment.RIGHT);
         row.setPaddingRight(1);
@@ -336,7 +337,7 @@ public class BookLendingView extends View implements ListView<BookLending> {
 
     @Override
     public void showList(InputOption inputOption, List<BookLending> items) {
-        switch (inputOption){
+        switch (inputOption) {
             case CHECKOUT:
                 if (items.isEmpty()) System.out.println("Không có sách nào đang mượn.");
                 sc.nextLine();
@@ -382,7 +383,14 @@ public class BookLendingView extends View implements ListView<BookLending> {
         }
     }
 
-    public void showBooksLending(InputOption inputOption) {
-        showList(inputOption, bookLendingService.findAll());
+    public boolean showBooksLending(InputOption inputOption) {
+        List<BookLending> allBookLendins = bookLendingService.findAll();
+        if (allBookLendins.isEmpty()) {
+            System.out.println("Chưa có thông tin mượn sách.");
+            sc.nextLine();
+            return false;
+        }
+        showList(inputOption, allBookLendins);
+        return true;
     }
 }

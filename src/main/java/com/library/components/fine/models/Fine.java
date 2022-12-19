@@ -66,6 +66,7 @@ public class Fine {
         Instant paidAt = InstantUtils.parseInstant(fields[6]);
         Fine newFine = new Fine(id, bookItemId, userId, createdAt, fineAmount);
         newFine.setStatus(status);
+        newFine.setPaidAt(paidAt);
         return newFine;
     }
 

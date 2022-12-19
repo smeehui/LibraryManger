@@ -10,6 +10,7 @@ import com.library.services.Constants;
 import com.library.utils.CSVUtils;
 import com.library.utils.InstantUtils;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,12 +54,13 @@ public class FineService implements IFineService {
     @Override
     public void collectFine() {
         for (BookLending bookLending : bookLendingService.findAll()) {
-            if (bookLending.getStatus() == LendingStatus.RETURN) {
-                if (bookLending.getDueAt().isBefore(bookLending.getReturnAt())) {
+//            if (bookLending.getStatus() == LendingStatus.RETURN) {
+            Instant returnAt = bookLending.getReturnAt() == null ? Instant.now() : bookLending.getReturnAt();
+            if (bookLending.getDueAt().isBefore(returnAt)) {
                     Fine existedFine = findByUserIdAndBookItemId(bookLending.getUserId(), bookLending.getBookItemId());
                     //Nếu chưa có trong danh sách nộp phạt
                     if (existedFine == null) {
-                        double fineAmount = InstantUtils.countGapTime(bookLending.getReturnAt(), bookLending.getDueAt()) * Constants.FINE_AMOUNT;
+                        double fineAmount = InstantUtils.countGapTime(returnAt, bookLending.getDueAt()) * Constants.FINE_AMOUNT;
                         Fine newFine = new Fine(bookLending.getBookItemId(), bookLending.getUserId(), fineAmount);
                         newFine.setStatus(FineStatus.UNPAID);
                         add(newFine,true);
@@ -67,11 +69,11 @@ public class FineService implements IFineService {
                     else if (existedFine != null) {
                         Fine newFine = new Fine();
                         newFine.setId(existedFine.getId());
-                        newFine.setFineAmount(InstantUtils.countGapTime(bookLending.getReturnAt(), bookLending.getDueAt()) * Constants.FINE_AMOUNT);
+                        newFine.setFineAmount(InstantUtils.countGapTime(returnAt, bookLending.getDueAt()) * Constants.FINE_AMOUNT);
                         update(newFine);
                     }
                 }
-            }
+//            }
         }
     }
 
@@ -106,9 +108,9 @@ public class FineService implements IFineService {
                     paidFines.add(fine);
                     CSVUtils.write(PAID_PATH, paidFines);
                 }
-                CSVUtils.write(PATH, fines);
             }
         }
+        CSVUtils.write(PATH, fines);
     }
 
     private List<Fine> findAllPaidFInes() {
